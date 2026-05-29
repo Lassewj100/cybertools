@@ -1,0 +1,328 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-mono,'Courier New',monospace)}
+.hub{padding:1.5rem 0}
+.header{margin-bottom:2rem}
+.logo{font-size:22px;font-weight:500;color:var(--color-text-primary);letter-spacing:-0.5px}
+.logo span{color:#1D9E75}
+.subtitle{font-size:13px;color:var(--color-text-secondary);margin-top:4px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.5rem;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:0}
+.tab{padding:8px 14px;font-size:13px;font-family:var(--font-mono);cursor:pointer;border:none;background:none;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:color 0.15s}
+.tab:hover{color:var(--color-text-primary)}
+.tab.active{color:#1D9E75;border-bottom:2px solid #1D9E75;font-weight:500}
+.panel{display:none}
+.panel.active{display:block}
+.tool-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1rem}
+.tool-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;font-family:var(--font-mono)}
+.input-row{display:flex;gap:8px;align-items:stretch}
+.input-row input{flex:1;font-family:var(--font-mono);font-size:13px}
+.input-row button{white-space:nowrap;font-family:var(--font-mono);font-size:13px}
+.result-box{margin-top:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;font-family:var(--font-mono);font-size:12px;color:var(--color-text-primary);min-height:48px;line-height:1.7;word-break:break-all}
+.result-box .ok{color:#0F6E56}
+.result-box .warn{color:#BA7517}
+.result-box .bad{color:#A32D2D}
+.result-box .key{color:var(--color-text-secondary)}
+.strength-bar{height:6px;border-radius:3px;background:var(--color-border-tertiary);margin:10px 0 4px;overflow:hidden}
+.strength-fill{height:100%;border-radius:3px;transition:width 0.3s,background 0.3s}
+.strength-label{font-size:12px;font-family:var(--font-mono)}
+.hash-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+.hash-row{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;font-family:var(--font-mono);font-size:11px}
+.hash-type{color:var(--color-text-secondary);font-size:11px;margin-bottom:3px}
+.hash-val{color:var(--color-text-primary);word-break:break-all;line-height:1.5}
+.copy-btn{font-size:11px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+.port-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:12px}
+.port-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px;font-family:var(--font-mono);font-size:12px}
+.port-num{font-weight:500;color:var(--color-text-primary)}
+.port-name{color:var(--color-text-secondary);font-size:11px}
+.encode-tabs{display:flex;gap:6px;margin-bottom:10px}
+.encode-tab{font-size:12px;padding:4px 10px;font-family:var(--font-mono);cursor:pointer;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:none;color:var(--color-text-secondary)}
+.encode-tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.gen-opts{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;font-size:13px;font-family:var(--font-mono)}
+.gen-opts label{display:flex;align-items:center;gap:5px;color:var(--color-text-secondary);cursor:pointer}
+.gen-len{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gen-len label{font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono)}
+.gen-len input[type=range]{flex:1}
+.gen-len span{font-size:13px;font-weight:500;min-width:28px;font-family:var(--font-mono)}
+</style>
+
+<h2 class="sr-only">Cybersecurity tools hub — IP lookup, password checker, hash generator, and more</h2>
+<div class="hub">
+  <div class="header">
+    <div class="logo"><span>//</span> CyberTools</div>
+    <div class="subtitle">open-source security utilities &middot; built with vanilla js</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('ip')"><i class="ti ti-world" aria-hidden="true"></i> IP Lookup</button>
+    <button class="tab" onclick="switchTab('pass')"><i class="ti ti-lock" aria-hidden="true"></i> Password</button>
+    <button class="tab" onclick="switchTab('hash')"><i class="ti ti-hash" aria-hidden="true"></i> Hash</button>
+    <button class="tab" onclick="switchTab('encode')"><i class="ti ti-code" aria-hidden="true"></i> Encode</button>
+    <button class="tab" onclick="switchTab('ports')"><i class="ti ti-network" aria-hidden="true"></i> Ports</button>
+    <button class="tab" onclick="switchTab('gen')"><i class="ti ti-key" aria-hidden="true"></i> Generator</button>
+  </div>
+
+  <div id="panel-ip" class="panel active">
+    <div class="tool-card">
+      <div class="tool-label">// ip address lookup</div>
+      <div class="input-row">
+        <input type="text" id="ip-input" placeholder="e.g. 8.8.8.8 (leave blank for your IP)" />
+        <button onclick="lookupIP()"><i class="ti ti-search" aria-hidden="true"></i> Lookup</button>
+      </div>
+      <div class="result-box" id="ip-result"><span style="color:var(--color-text-tertiary)">Enter an IP or leave blank to check your own IP.</span></div>
+    </div>
+  </div>
+
+  <div id="panel-pass" class="panel">
+    <div class="tool-card">
+      <div class="tool-label">// password strength checker</div>
+      <div class="input-row">
+        <input type="password" id="pass-input" placeholder="Enter a password to analyse..." oninput="checkPass()" />
+        <button onclick="togglePassVis()"><i class="ti ti-eye" aria-hidden="true"></i></button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill" style="width:0%;background:#E24B4A"></div></div>
+      <div class="strength-label" id="strength-label" style="color:var(--color-text-tertiary)">—</div>
+      <div class="result-box" id="pass-result" style="margin-top:10px"><span style="color:var(--color-text-tertiary)">Type a password above.</span></div>
+    </div>
+  </div>
+
+  <div id="panel-hash" class="panel">
+    <div class="tool-card">
+      <div class="tool-label">// hash generator (sha-1, sha-256, sha-512)</div>
+      <div class="input-row">
+        <input type="text" id="hash-input" placeholder="Enter text to hash..." />
+        <button onclick="generateHashes()"><i class="ti ti-hash" aria-hidden="true"></i> Hash</button>
+      </div>
+      <div id="hash-result"></div>
+    </div>
+  </div>
+
+  <div id="panel-encode" class="panel">
+    <div class="tool-card">
+      <div class="tool-label">// encoder / decoder</div>
+      <div class="encode-tabs">
+        <button class="encode-tab active" onclick="setEncodeMode('b64',this)">Base64</button>
+        <button class="encode-tab" onclick="setEncodeMode('url',this)">URL</button>
+        <button class="encode-tab" onclick="setEncodeMode('hex',this)">Hex</button>
+        <button class="encode-tab" onclick="setEncodeMode('html',this)">HTML</button>
+      </div>
+      <div class="input-row">
+        <input type="text" id="encode-input" placeholder="Enter text..." />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="doEncode()" style="flex:1">Encode</button>
+        <button onclick="doDecode()" style="flex:1">Decode</button>
+      </div>
+      <div class="result-box" id="encode-result"><span style="color:var(--color-text-tertiary)">Result appears here.</span></div>
+    </div>
+  </div>
+
+  <div id="panel-ports" class="panel">
+    <div class="tool-card">
+      <div class="tool-label">// common ports reference</div>
+      <div class="input-row">
+        <input type="text" id="port-search" placeholder="Search port or service..." oninput="filterPorts()" />
+      </div>
+      <div class="port-grid" id="port-grid"></div>
+    </div>
+  </div>
+
+  <div id="panel-gen" class="panel">
+    <div class="tool-card">
+      <div class="tool-label">// secure password / token generator</div>
+      <div class="gen-len">
+        <label>length</label>
+        <input type="range" id="gen-len" min="8" max="128" value="32" step="1" oninput="document.getElementById('gen-len-val').textContent=this.value;generatePassword()" />
+        <span id="gen-len-val">32</span>
+      </div>
+      <div class="gen-opts">
+        <label><input type="checkbox" id="gen-upper" checked onchange="generatePassword()"> A–Z</label>
+        <label><input type="checkbox" id="gen-lower" checked onchange="generatePassword()"> a–z</label>
+        <label><input type="checkbox" id="gen-num" checked onchange="generatePassword()"> 0–9</label>
+        <label><input type="checkbox" id="gen-sym" onchange="generatePassword()"> !@#$</label>
+      </div>
+      <div class="result-box" id="gen-result" style="letter-spacing:1px;font-size:13px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="generatePassword()" style="flex:1"><i class="ti ti-refresh" aria-hidden="true"></i> Regenerate</button>
+        <button onclick="copyGen()" style="flex:1"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let encodeMode = 'b64';
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.closest('.tab').classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+  if(id === 'ports') renderPorts();
+  if(id === 'gen') generatePassword();
+}
+
+async function lookupIP() {
+  const val = document.getElementById('ip-input').value.trim();
+  const box = document.getElementById('ip-result');
+  box.innerHTML = '<span style="color:var(--color-text-tertiary)">Looking up...</span>';
+  try {
+    const url = val ? `https://ipapi.co/${val}/json/` : 'https://ipapi.co/json/';
+    const r = await fetch(url);
+    const d = await r.json();
+    if(d.error) { box.innerHTML = `<span class="bad">Error: ${d.reason||'Invalid IP'}</span>`; return; }
+    box.innerHTML = `
+<span class="key">ip         </span><span class="ok">${d.ip}</span>
+<span class="key">hostname   </span>${d.hostname||'—'}
+<span class="key">city       </span>${d.city||'—'}, ${d.region||'—'}
+<span class="key">country    </span>${d.country_name||'—'} (${d.country||'—'})
+<span class="key">org        </span>${d.org||'—'}
+<span class="key">timezone   </span>${d.timezone||'—'}
+<span class="key">latitude   </span>${d.latitude||'—'}
+<span class="key">longitude  </span>${d.longitude||'—'}`;
+  } catch(e) {
+    box.innerHTML = '<span class="bad">Fetch failed. Check your connection.</span>';
+  }
+}
+
+function checkPass() {
+  const p = document.getElementById('pass-input').value;
+  const fill = document.getElementById('strength-fill');
+  const lbl = document.getElementById('strength-label');
+  const box = document.getElementById('pass-result');
+  if(!p) { fill.style.width='0%'; lbl.textContent='—'; box.innerHTML='<span style="color:var(--color-text-tertiary)">Type a password above.</span>'; return; }
+  let score = 0;
+  const checks = {
+    'length >= 8': p.length >= 8,
+    'length >= 12': p.length >= 12,
+    'length >= 16': p.length >= 16,
+    'uppercase (A-Z)': /[A-Z]/.test(p),
+    'lowercase (a-z)': /[a-z]/.test(p),
+    'numbers (0-9)': /[0-9]/.test(p),
+    'symbols (!@#...)': /[^A-Za-z0-9]/.test(p),
+    'no repeated chars': !/(.)\1{2,}/.test(p),
+    'no common patterns': !/(password|123|abc|qwerty)/i.test(p)
+  };
+  score = Object.values(checks).filter(Boolean).length;
+  const pct = Math.round((score / 9) * 100);
+  fill.style.width = pct + '%';
+  let color, label;
+  if(pct < 33) { color='#E24B4A'; label='weak'; }
+  else if(pct < 55) { color='#BA7517'; label='fair'; }
+  else if(pct < 77) { color='#1D9E75'; label='good'; }
+  else { color='#0F6E56'; label='strong'; }
+  fill.style.background = color;
+  lbl.style.color = color;
+  lbl.textContent = `${label} (${score}/9 checks passed)`;
+  box.innerHTML = Object.entries(checks).map(([k,v]) =>
+    `<span class="${v?'ok':'bad'}">${v?'[+]':'[-]'}</span> <span class="key">${k}</span>`
+  ).join('\n');
+}
+
+function togglePassVis() {
+  const i = document.getElementById('pass-input');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+async function generateHashes() {
+  const text = document.getElementById('hash-input').value;
+  const box = document.getElementById('hash-result');
+  if(!text) { box.innerHTML='<div class="result-box"><span style="color:var(--color-text-tertiary)">Enter text above.</span></div>'; return; }
+  const enc = new TextEncoder();
+  const data = enc.encode(text);
+  const algos = ['SHA-1','SHA-256','SHA-512'];
+  box.innerHTML = '<div style="color:var(--color-text-tertiary);font-size:12px;padding:8px 0;font-family:var(--font-mono)">Computing hashes...</div>';
+  const results = await Promise.all(algos.map(async a => {
+    const buf = await crypto.subtle.digest(a, data);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }));
+  box.innerHTML = '<div class="hash-grid">' + algos.map((a,i) => `
+    <div class="hash-row">
+      <div class="hash-type">${a}</div>
+      <div class="hash-val" id="hv${i}">${results[i]}</div>
+    </div>`).join('') + '</div>';
+}
+
+function setEncodeMode(m, el) {
+  encodeMode = m;
+  document.querySelectorAll('.encode-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function doEncode() {
+  const v = document.getElementById('encode-input').value;
+  const box = document.getElementById('encode-result');
+  try {
+    let r;
+    if(encodeMode==='b64') r = btoa(unescape(encodeURIComponent(v)));
+    else if(encodeMode==='url') r = encodeURIComponent(v);
+    else if(encodeMode==='hex') r = Array.from(new TextEncoder().encode(v)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    else r = v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    box.textContent = r;
+  } catch(e) { box.innerHTML = '<span class="bad">Encoding failed.</span>'; }
+}
+
+function doDecode() {
+  const v = document.getElementById('encode-input').value;
+  const box = document.getElementById('encode-result');
+  try {
+    let r;
+    if(encodeMode==='b64') r = decodeURIComponent(escape(atob(v)));
+    else if(encodeMode==='url') r = decodeURIComponent(v);
+    else if(encodeMode==='hex') r = new TextDecoder().decode(new Uint8Array(v.match(/.{1,2}/g).map(b=>parseInt(b,16))));
+    else r = v.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    box.textContent = r;
+  } catch(e) { box.innerHTML = '<span class="bad">Decoding failed. Check input format.</span>'; }
+}
+
+const PORTS = [
+  {p:20,n:'FTP Data'},{p:21,n:'FTP Control'},{p:22,n:'SSH'},{p:23,n:'Telnet'},{p:25,n:'SMTP'},
+  {p:53,n:'DNS'},{p:67,n:'DHCP Server'},{p:68,n:'DHCP Client'},{p:80,n:'HTTP'},{p:110,n:'POP3'},
+  {p:115,n:'SFTP'},{p:119,n:'NNTP'},{p:123,n:'NTP'},{p:143,n:'IMAP'},{p:161,n:'SNMP'},
+  {p:194,n:'IRC'},{p:443,n:'HTTPS'},{p:445,n:'SMB'},{p:465,n:'SMTPS'},{p:514,n:'Syslog'},
+  {p:587,n:'SMTP TLS'},{p:636,n:'LDAPS'},{p:993,n:'IMAPS'},{p:995,n:'POP3S'},{p:1194,n:'OpenVPN'},
+  {p:1433,n:'MSSQL'},{p:1521,n:'Oracle DB'},{p:3306,n:'MySQL'},{p:3389,n:'RDP'},{p:5432,n:'PostgreSQL'},
+  {p:5900,n:'VNC'},{p:6379,n:'Redis'},{p:8080,n:'HTTP Alt'},{p:8443,n:'HTTPS Alt'},{p:27017,n:'MongoDB'}
+];
+let filteredPorts = [...PORTS];
+
+function renderPorts() {
+  const g = document.getElementById('port-grid');
+  g.innerHTML = filteredPorts.map(p =>
+    `<div class="port-item"><div class="port-num">${p.p}</div><div class="port-name">${p.n}</div></div>`
+  ).join('');
+}
+
+function filterPorts() {
+  const q = document.getElementById('port-search').value.toLowerCase();
+  filteredPorts = PORTS.filter(p => p.p.toString().includes(q) || p.n.toLowerCase().includes(q));
+  renderPorts();
+}
+
+function generatePassword() {
+  const len = parseInt(document.getElementById('gen-len').value);
+  const upper = document.getElementById('gen-upper').checked;
+  const lower = document.getElementById('gen-lower').checked;
+  const num = document.getElementById('gen-num').checked;
+  const sym = document.getElementById('gen-sym').checked;
+  let chars = '';
+  if(upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if(lower) chars += 'abcdefghijklmnopqrstuvwxyz';
+  if(num) chars += '0123456789';
+  if(sym) chars += '!@#$%^&*()-_=+[]{}|;:,.<>?';
+  if(!chars) chars = 'abcdefghijklmnopqrstuvwxyz';
+  const arr = new Uint32Array(len);
+  crypto.getRandomValues(arr);
+  const pwd = Array.from(arr).map(v => chars[v % chars.length]).join('');
+  document.getElementById('gen-result').textContent = pwd;
+}
+
+function copyGen() {
+  const txt = document.getElementById('gen-result').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target.closest('button');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy', 1500);
+  });
+}
+</script>
